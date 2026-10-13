@@ -1,3 +1,4 @@
+import { getJson } from '../api/client.js';
 import { CapabilityCard } from './CapabilityCard.js';
 
 type LeaderboardEntry = {
@@ -6,12 +7,18 @@ type LeaderboardEntry = {
   rank?: number;
 };
 
+type LeaderboardPayload = { leaderboard?: LeaderboardEntry[] };
+
+function loadLeaderboard() {
+  return getJson<LeaderboardPayload>('/api/leaderboard');
+}
+
 export default function Leaderboard() {
   return (
     <CapabilityCard
       title="Leaderboard"
       description="Compare team point totals."
-      path="/api/leaderboard"
+      load={loadLeaderboard}
       emptyMessage="No leaderboard entries"
       mapItems={(payload: { leaderboard?: LeaderboardEntry[] }) => payload.leaderboard ?? []}
       renderItem={(item) => {

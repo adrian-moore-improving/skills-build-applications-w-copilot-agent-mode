@@ -1,3 +1,4 @@
+import { getJson } from '../api/client.js';
 import { CapabilityCard } from './CapabilityCard.js';
 
 type Activity = {
@@ -6,12 +7,18 @@ type Activity = {
   points?: number;
 };
 
+type ActivitiesPayload = { activities?: Activity[] };
+
+function loadActivities() {
+  return getJson<ActivitiesPayload>('/api/activities');
+}
+
 export default function Activities() {
   return (
     <CapabilityCard
       title="Activities"
       description="Track student activity minutes and points."
-      path="/api/activities"
+      load={loadActivities}
       emptyMessage="No activities"
       mapItems={(payload: { activities?: Activity[] }) => payload.activities ?? []}
       renderItem={(item, index) => {

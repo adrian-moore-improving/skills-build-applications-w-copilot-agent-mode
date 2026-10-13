@@ -1,3 +1,4 @@
+import { getJson } from '../api/client.js';
 import { CapabilityCard } from './CapabilityCard.js';
 
 type WorkoutSuggestion = {
@@ -5,12 +6,18 @@ type WorkoutSuggestion = {
   reason?: string;
 };
 
+type WorkoutsPayload = { suggestions?: WorkoutSuggestion[] };
+
+function loadWorkouts() {
+  return getJson<WorkoutsPayload>('/api/workouts/suggestions/mona@example.com');
+}
+
 export default function Workouts() {
   return (
     <CapabilityCard
       title="Workout suggestions"
       description="Recommend workouts from activity patterns."
-      path="/api/workouts/suggestions/mona@example.com"
+      load={loadWorkouts}
       emptyMessage="No workout suggestions"
       mapItems={(payload: { suggestions?: WorkoutSuggestion[] }) => payload.suggestions ?? []}
       renderItem={(item) => {

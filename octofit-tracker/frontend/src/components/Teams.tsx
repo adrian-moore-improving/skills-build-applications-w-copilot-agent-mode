@@ -1,3 +1,4 @@
+import { getJson } from '../api/client.js';
 import { CapabilityCard } from './CapabilityCard.js';
 
 type Team = {
@@ -5,12 +6,18 @@ type Team = {
   members?: string[];
 };
 
+type TeamsPayload = { teams?: Team[] };
+
+function loadTeams() {
+  return getJson<TeamsPayload>('/api/teams');
+}
+
 export default function Teams() {
   return (
     <CapabilityCard
       title="Teams"
       description="Manage teams and members."
-      path="/api/teams"
+      load={loadTeams}
       emptyMessage="No teams"
       mapItems={(payload: { teams?: Team[] }) => payload.teams ?? []}
       renderItem={(item) => {

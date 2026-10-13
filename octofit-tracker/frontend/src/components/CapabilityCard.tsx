@@ -1,10 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { getJson } from '../api/client.js';
 
 type CapabilityCardProps<T> = {
   title: string;
   description: string;
-  path: string;
+  load: () => Promise<T>;
   emptyMessage: string;
   mapItems: (payload: T) => Array<Record<string, unknown> | string | number>;
   renderItem: (item: Record<string, unknown> | string | number, index: number) => ReactNode;
@@ -13,7 +12,7 @@ type CapabilityCardProps<T> = {
 export function CapabilityCard<T>({
   title,
   description,
-  path,
+  load,
   emptyMessage,
   mapItems,
   renderItem,
@@ -28,7 +27,7 @@ export function CapabilityCard<T>({
     setIsLoading(true);
     setError(null);
 
-    void getJson<T>(path)
+    void load()
       .then((payload) => {
         if (!active) return;
         setItems(mapItems(payload));
@@ -46,7 +45,7 @@ export function CapabilityCard<T>({
     return () => {
       active = false;
     };
-  }, [path, title]);
+  }, [load, title]);
 
   const heading = <h2 className="h4">{title}</h2>;
 
