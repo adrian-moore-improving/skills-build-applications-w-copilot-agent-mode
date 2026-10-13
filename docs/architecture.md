@@ -28,22 +28,43 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 ## Implementation decisions
 
-Record your plan here before editing code.
-
 - Presentation tier decision:
+  - Keep the React app thin and route-oriented: each page should fetch the data it owns, render accessible headings and status text, and show empty/error/loading states without business logic in the component tree.
+  - Use a shared API helper for the `/api/*` endpoints so the UI remains consistent across activity, team, leaderboard, and workout screens.
 - Logic tier decision:
+  - Implement the Express API as small route handlers backed by focused services so validation, normalization, and aggregation live in one place.
+  - Centralize request validation in the API layer and convert Mongoose cast/lookup errors into deliberate 4xx responses rather than letting them leak as 500s.
 - Data tier decision:
+  - Use Mongoose schemas as the source of truth for required fields, defaults, and relationships between `User`, `Team`, `Activity`, and `Workout` records.
+  - Keep seed data idempotent so repeated runs preserve existing users, teams, activities, and workouts without duplicating seeded content.
 - Activity tracking approach:
+  - Accept `userId`, `teamId`, `type`, and `minutes` from POST requests, reject invalid or missing references with 400/404-style 4xx responses, and store a linked activity with computed `points` and `occurredAt`.
+  - Keep the schema strict enough that an activity cannot exist without a user, team, activity type, duration, points, or timestamp.
 - Team management approach:
+  - Require team names and mascots, default `members` to an empty array, and preserve member references as ObjectIds in the data model while returning ids cleanly through the API.
+  - Encourage clear membership semantics: a team is created with a list of user ids when provided, and listings surface those members as an array of ids.
 - Leaderboard approach:
+  - Aggregate activities by team, sum `points` for each team, and return rows sorted descending by total points with a 1-based rank.
+  - Keep the leaderboard derived from persisted activity data rather than duplicating state in the UI.
 - Workout suggestions approach:
+  - Recommend workouts based on the matching user’s recent activity pattern or fitness goal, preferring a suggestion whose `focus` aligns with that pattern and including a human-readable `reason`.
+  - Return a deliberate 4xx for an unknown email address so the API does not silently fall through.
 
 ## Test plan
 
 Record the commands you run and what each failure means.
 
 - Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
+  - This validates the Mongoose schema contract. Failures indicate missing required fields, default values, or invalid relationship constraints in the data model.
 - API command: `npm run test:api --prefix octofit-tracker/backend`
+  - This validates the Express behavior contract. Failures indicate missing route logic, wrong HTTP status codes, incorrect validation handling, leaderboard aggregation bugs, or mismatched workout recommendations.
 - Frontend command: `npm test --prefix octofit-tracker/frontend`
+  - This validates the presentation contract. Failures indicate missing fetch calls, incorrect route handling, missing loading/empty/error states, or inaccessible UI content.
 - Backend build command: `npm run build --prefix octofit-tracker/backend`
+  - This catches TypeScript and compile-time issues in the backend, including route/service integration mistakes or invalid imports that the tests may not reach.
 - Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+  - This catches UI build issues, route errors, and TypeScript problems in the React app before it is shipped.
+- Expected implementation order driven by these checks:
+  1. Fix data model validation and seed behavior first so the contracts are stable.
+  2. Repair API route logic and output shape next so the logic tier meets the contract.
+  3. Finish the frontend UI and accessibility requirements last, once the backend contract is reliable.
