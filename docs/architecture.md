@@ -28,27 +28,13 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 ## Implementation decisions
 
-- Presentation tier decision:
-  - Keep the React app thin and route-oriented: each page should fetch the data it owns, render accessible headings and status text, and show empty/error/loading states without business logic in the component tree.
-  - Use a shared API helper for the `/api/*` endpoints so the UI remains consistent across activity, team, leaderboard, and workout screens.
-- Logic tier decision:
-  - Implement the Express API as small route handlers backed by focused services so validation, normalization, and aggregation live in one place.
-  - Centralize request validation in the API layer and convert Mongoose cast/lookup errors into deliberate 4xx responses rather than letting them leak as 500s.
-- Data tier decision:
-  - Use Mongoose schemas as the source of truth for required fields, defaults, and relationships between `User`, `Team`, `Activity`, and `Workout` records.
-  - Keep seed data idempotent so repeated runs preserve existing users, teams, activities, and workouts without duplicating seeded content.
-- Activity tracking approach:
-  - Accept `userId`, `teamId`, `type`, and `minutes` from POST requests, reject invalid or missing references with 400/404-style 4xx responses, and store a linked activity with computed `points` and `occurredAt`.
-  - Keep the schema strict enough that an activity cannot exist without a user, team, activity type, duration, points, or timestamp.
-- Team management approach:
-  - Require team names and mascots, default `members` to an empty array, and preserve member references as ObjectIds in the data model while returning ids cleanly through the API.
-  - Encourage clear membership semantics: a team is created with a list of user ids when provided, and listings surface those members as an array of ids.
-- Leaderboard approach:
-  - Aggregate activities by team, sum `points` for each team, and return rows sorted descending by total points with a 1-based rank.
-  - Keep the leaderboard derived from persisted activity data rather than duplicating state in the UI.
-- Workout suggestions approach:
-  - Recommend workouts based on the matching user’s recent activity pattern or fitness goal, preferring a suggestion whose `focus` aligns with that pattern and including a human-readable `reason`.
-  - Return a deliberate 4xx for an unknown email address so the API does not silently fall through.
+- Presentation tier decision: Keep the React app thin and route-oriented so each page fetches the data it owns, renders accessible headings and status text, and shows loading, empty, and error states without business logic in the component tree. Use a shared API helper for the `/api/*` endpoints to keep the UI consistent across activity, team, leaderboard, and workout screens.
+- Logic tier decision: Implement the Express API as small route handlers backed by focused services so validation, normalization, and aggregation live in one place, and convert Mongoose cast or lookup errors into deliberate 4xx responses instead of leaking 500s.
+- Data tier decision: Use Mongoose schemas as the source of truth for required fields, defaults, and relationships between `User`, `Team`, `Activity`, and `Workout`, and keep seed data idempotent so repeated runs preserve existing records without duplicating seeded content.
+- Activity tracking approach: Accept `userId`, `teamId`, `type`, and `minutes` in POST requests, reject invalid or missing references with 4xx responses, and store a linked activity with computed `points` and `occurredAt` while leaving the schema strict enough to require a user, team, type, minutes, points, and timestamp.
+- Team management approach: Require team names and mascots, default `members` to an empty array, preserve member references as ObjectIds in the model, and return member ids cleanly through the API while keeping team creation behavior simple and explicit.
+- Leaderboard approach: Aggregate activities by team, sum `points` for each team, and return rows sorted descending by total points with a 1-based rank so the leaderboard reflects live persisted activity data rather than duplicated UI state.
+- Workout suggestions approach: Recommend workouts from the matching user’s recent activity pattern or fitness goal, prefer a suggestion whose `focus` matches that signal, include a human-readable `reason`, and return a deliberate 4xx for unknown email addresses so the API fails clearly instead of silently.
 
 ## Test plan
 
